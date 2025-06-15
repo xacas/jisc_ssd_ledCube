@@ -1,8 +1,10 @@
 # jisc_ssd
 ## 概要
-[JISC-SSD(Jisaku In-Storage Computation SSD学習ボード)](https://crane-elec.co.jp/products/vol-28/)の動作サンプルというか実装例というかデバッグツールというかです。
+[gpsnmeajp氏の JISC-SSD PJ](https://github.com/gpsnmeajp/jisc_ssd)のforkです。
+LEDキューブを制御するプログラムを追加して、NAND型フラッシュメモリの書き込み状態を可視化します。
+当リポジトリをお試し頂くには[JISC-SSD(Jisaku In-Storage Computation SSD学習ボード)](https://crane-elec.co.jp/products/vol-28/)が必要です。
 
-参考: [https://note.com/gpsnmeajp/n/n7a85a5118065](https://note.com/gpsnmeajp/n/n7a85a5118065)
+ご参考: [https://note.com/gpsnmeajp/n/n7a85a5118065](https://note.com/gpsnmeajp/n/n7a85a5118065)
 
 Arduino IDE + [earlephilhower/arduino-pico](https://github.com/earlephilhower/arduino-pico) を導入した環境で、  
 JISC-SSDに転送すると動作します。
@@ -28,8 +30,9 @@ TeraTermなど端末エミュレータでCOMポートに接続してください
 
 ![](config.png)
 
-## msc_ecc.ino
-USB-SSDとして認識させるサンプルです
+## msc_ecc_ledCube.ino
+USB-SSDとして認識させるサンプルです。
+LEDキューブを制御し、NAND型フラッシュメモリのデータを可視化します。
 
 下記のmsc.inoに拡張ハミング符号(8,4)を実装して、ビットエラーに対処した代わりに、  
 容量が半分(62MB)になったバージョンです。
@@ -66,19 +69,4 @@ Trimなし
 ![](check.png)
 
 ![](disc.png)
-
-## msc_ecc_fs.ino
-USB-SSDとして認識させた上で、さらに横からPetit FatFs(ELM-Chan氏ライブラリ)で  
-led.txtを読み込んでLEDに反映させる機能をつけたものです。
-
-```
-echo 1 > E:\led.txt
-echo 0 > E:\led.txt
-```
-
-**NANDアクセス処理に対して排他処理をしていないため、MSCもFatFsも正常に動作しなくなるときがあります。**
-
-**決して大切なデータを保存しないで下さい**
-
-![](block.png)
 

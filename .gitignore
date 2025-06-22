@@ -2,3 +2,5 @@ msc/.vscode/arduino.json
 msc/.vscode/c_cpp_properties.json
 msc_ecc/.vscode/
 msc_ecc_fs/.vscode/
+.vscode/
+msc_ecc_ledCube/build

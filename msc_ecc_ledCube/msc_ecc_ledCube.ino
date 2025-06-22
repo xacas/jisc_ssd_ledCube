@@ -31,15 +31,9 @@ void setup() {
   usb_msc.setUnitReady(true);
   usb_msc.begin();
 
-  //Serial接続待ち
-  /*
-  while (!Serial) {
-    digitalWrite(PIN_LED, LOW);
-    delay(100);
-    digitalWrite(PIN_LED, HIGH);
-    delay(100);
-  }
-  */
+  Serial1.setTX(28);  // TXをGP0に
+  Serial1.setRX(29);  // RXをGP1に
+  Serial1.begin(115200);
 }
 
 // バッファが全て0かどうかをチェックする関数
@@ -105,6 +99,16 @@ int32_t msc_read(uint32_t lba, void *buffer, uint32_t bufsize){
 }
 
 int32_t msc_write(uint32_t lba, uint8_t *buffer, uint32_t bufsize){
+
+  if(is_buffer_all_zeros(buffer, bufsize))
+  {
+    Serial1.printf("%d, %d, %d, %d\n",lba, 0, 0, 255);
+  }
+  else
+  {
+    Serial1.printf("%d, %d, %d, %d\n",lba, 255, 0, 0);
+  }
+
   accessLed();
   int page = bad_block_replace(lba/2);
   int in_page = page % jisc_ssd_pages_of_block;

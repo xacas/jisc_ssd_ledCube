@@ -3,6 +3,8 @@
 
 //USB StackをAdafruit_TinyUSBにしてください
 
+#define BLOCK_NUM (6*6*6)
+
 Adafruit_USBD_MSC usb_msc;
 int target_block = -1;
 bool haveBufferData = false;
@@ -20,14 +22,13 @@ void accessLed()
 
 void setup() {
   pinMode(PIN_LED, OUTPUT);
-  //Serial.begin(115200);
 
   jisc_ssd_lowlevel_operation_init();
   jisc_ssd_lowlevel_operation_reset();
 
   usb_msc.setID("Afafruit","External Flash", "1.0");
   usb_msc.setReadWriteCallback(msc_read, msc_write, msc_flush);
-  usb_msc.setCapacity(1000*64*2,512);//24ブロックは予備
+  usb_msc.setCapacity(BLOCK_NUM*jisc_ssd_pages_of_block*2,512);//1 Block = 2LBA
   usb_msc.setUnitReady(true);
   usb_msc.begin();
 
@@ -59,22 +60,22 @@ int32_t msc_read(uint32_t lba, void *buffer, uint32_t bufsize){
   int page = bad_block_replace(lba/2);
   int in_page = page%jisc_ssd_pages_of_block;
   int block = page / jisc_ssd_pages_of_block;
-/*
-  Serial.print("lba:");
-  Serial.print(lba);
-  Serial.print(" bufsize:");
-  Serial.print(bufsize);
-  Serial.println();
-  Serial.print("target_block:");
-  Serial.print(target_block);
-  Serial.print(" block:");
-  Serial.print(block);
-  Serial.print(" page:");
-  Serial.print(page);
-  Serial.print(" in_page:");
-  Serial.print(in_page);
-  Serial.println();
-*/
+#if 0
+  Serial1.print("lba:");
+  Serial1.print(lba);
+  Serial1.print(" bufsize:");
+  Serial1.print(bufsize);
+  Serial1.println();
+  Serial1.print("target_block:");
+  Serial1.print(target_block);
+  Serial1.print(" block:");
+  Serial1.print(block);
+  Serial1.print(" page:");
+  Serial1.print(page);
+  Serial1.print(" in_page:");
+  Serial1.print(in_page);
+  Serial1.println();
+#endif
   if(target_block != block){
     if(target_block >= 0 && haveBufferData){
       //現在保持しているブロックの内容を書き込み
@@ -100,35 +101,26 @@ int32_t msc_read(uint32_t lba, void *buffer, uint32_t bufsize){
 
 int32_t msc_write(uint32_t lba, uint8_t *buffer, uint32_t bufsize){
 
-  if(is_buffer_all_zeros(buffer, bufsize))
-  {
-    Serial1.printf("%d, %d, %d, %d\n",lba, 0, 0, 255);
-  }
-  else
-  {
-    Serial1.printf("%d, %d, %d, %d\n",lba, 255, 0, 0);
-  }
-
   accessLed();
   int page = bad_block_replace(lba/2);
   int in_page = page % jisc_ssd_pages_of_block;
   int block = page / jisc_ssd_pages_of_block;
-/*
-  Serial.print("lba:");
-  Serial.print(lba);
-  Serial.print(" bufsize:");
-  Serial.print(bufsize);
-  Serial.println();
-  Serial.print("target_block:");
-  Serial.print(target_block);
-  Serial.print(" block:");
-  Serial.print(block);
-  Serial.print(" page:");
-  Serial.print(page);
-  Serial.print(" in_page:");
-  Serial.print(in_page);
-  Serial.println();
-*/
+#if 0
+  Serial1.print("lba:");
+  Serial1.print(lba);
+  Serial1.print(" bufsize:");
+  Serial1.print(bufsize);
+  Serial1.println();
+  Serial1.print("target_block:");
+  Serial1.print(target_block);
+  Serial1.print(" block:");
+  Serial1.print(block);
+  Serial1.print(" page:");
+  Serial1.print(page);
+  Serial1.print(" in_page:");
+  Serial1.print(in_page);
+  Serial1.println();
+#endif
   if(target_block != block){
     if(target_block >= 0 && haveBufferData){
       //現在保持しているブロックの内容を書き込み
@@ -162,16 +154,19 @@ void msc_flush()
       }
       jisc_ssd_block_buffer[jisc_ssd_block_size-1] = 0xAA; //使用済みブロックマーキング
       writeBlockOp(target_block);
+
+      haveBufferData = false;
     }
 
     target_block = -1;
 }
 
 int bad_block_replace(int page){
+#if 0
   int block = page / jisc_ssd_pages_of_block;
   switch(block){
     case 93:
-      page = page + ((-93 + 1000) * jisc_ssd_pages_of_block);
+      page = page + ((-93 + BLOCK_NUM) * jisc_ssd_pages_of_block);
       break;
     case 768:
       page = page + ((-768 + 1001) * jisc_ssd_pages_of_block);
@@ -179,6 +174,7 @@ int bad_block_replace(int page){
     default:
       break;
   }
+#endif
   return page;
 }
 
@@ -197,6 +193,16 @@ bool checkErrorStatus(){
 }
 
 void writeBlockOp(int block){
+
+  if(is_buffer_all_zeros(jisc_ssd_block_buffer, 512))
+  {
+    Serial1.printf("%d, 0, 0, 255\n",block);
+  }
+  else
+  {
+    Serial1.printf("%d, 255, 0, 0\n",block);
+  }
+  
   int offset = jisc_ssd_pages_of_block * block;
   for(int i=0;i<jisc_ssd_pages_of_block-1;i++)
   {
@@ -223,12 +229,15 @@ void writeBlockOp(int block){
   }
 
   if(checkErrorStatus()){
-    Serial.println("Error! ABORT");
+    Serial1.println("Error! ABORT");
     return;
   }
 }
 
 void readBlockOp(int block){
+
+  Serial1.printf("%d, 0, 255, 0\n",block);
+
   int offset = jisc_ssd_pages_of_block * block;
   for(int i=0;i<jisc_ssd_pages_of_block;i++)
   {
@@ -246,8 +255,10 @@ void readBlockOp(int block){
 
 void eraseBlockOp(int block)
 {
+  Serial1.printf("%d, 255, 255, 255\n", block);
   int page = block * jisc_ssd_pages_of_block;
   jisc_ssd_lowlevel_operation_command_input(0x60);
   jisc_ssd_lowlevel_operation_address2_input(page & 0xFF, ((page >> 8) & 0xFF)); //下位6bitに意味はない？
   jisc_ssd_lowlevel_operation_command_input(0xD0);
+  sleep_ms(100);
 }

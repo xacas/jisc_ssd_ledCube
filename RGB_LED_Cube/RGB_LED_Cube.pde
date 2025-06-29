@@ -9,7 +9,7 @@ Serial myPort;
 final int BAUD_RATE = 115200;
 
 // LEDキューブの設定
-final int CUBE_SIZE = 8;
+final int CUBE_SIZE = 6;
 final int NUM_LEDS = CUBE_SIZE * CUBE_SIZE * CUBE_SIZE;
 
 // LED の色情報を格納する配列
@@ -40,7 +40,7 @@ void setup() {
   // 使用可能なポートがあるか確認
   if (Serial.list().length > 0) {
     // 最初のポートを使用（実際の環境に合わせて変更してください）
-    String portName = "/dev/cu.usbserial-14340";//Serial.list()[0];
+    String portName = "COM6";//Serial.list()[0];
     myPort = new Serial(this, portName, BAUD_RATE);
     myPort.bufferUntil('\n');
     println("ポート接続: " + portName);
